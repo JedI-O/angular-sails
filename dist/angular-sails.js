@@ -17,7 +17,7 @@
         if (!headers) return parsed;
         angular.forEach(headers.split('\n'), function(line) {
             i = line.indexOf(':');
-            key = angular.lowercase(trim(line.substr(0, i)));
+            key = (trim(line.substr(0, i)) ? trim(line.substr(0, i)) : '').toLowerCase();
             val = trim(line.substr(i + 1));
             if (key) {
                 parsed[key] = parsed[key] ? parsed[key] + ', ' + val : val;
@@ -48,15 +48,15 @@
         var reqHeaders = angular.extend({}, config.headers),
             defHeaderName, lowercaseDefHeaderName, reqHeaderName;
 
-        defHeaders = angular.extend({}, defHeaders.common, defHeaders[angular.lowercase(config.method)]);
+        defHeaders = angular.extend({}, defHeaders.common, defHeaders[(config.method ? config.method : '').toLowerCase()]);
 
         // using for-in instead of forEach to avoid unecessary iteration after header has been found
         defaultHeadersIteration:
             for (defHeaderName in defHeaders) {
-                lowercaseDefHeaderName = angular.lowercase(defHeaderName);
+                lowercaseDefHeaderName = (defHeaderName ? defHeaderName : '').toLowerCase();
 
                 for (reqHeaderName in reqHeaders) {
-                    if (angular.lowercase(reqHeaderName) === lowercaseDefHeaderName) {
+                    if ((reqHeaderName ? reqHeaderName : '').toLowerCase() === lowercaseDefHeaderName) {
                         continue defaultHeadersIteration;
                     }
                 }
@@ -102,7 +102,7 @@
         return function(name) {
             if (!headersObj) headersObj = parseHeaders(headers);
             if (name) {
-                var value = headersObj[angular.lowercase(name)];
+                var value = headersObj[(name ? name : '').toLowerCase()];
                 if (value === void 0) {
                     value = null;
                 }
@@ -337,7 +337,7 @@
                     }
 
                     config = angular.extend({}, config, requestConfig);
-                    config.method = angular.uppercase(config.method || methodName);
+                    config.method = (config.method || methodName || '').toUpperCase();
                     config.headers = mergeHeaders(config, provider.defaults.headers);
                     config.url = (provider.urlPrefix || '') + (url || config.url);
 
@@ -610,15 +610,20 @@
             };
 
             SailsIo.prototype._send = function(req, res) {
+
                 var self = this;
-                var sailsEndpoint = angular.lowercase(req.method);
+                var sailsEndpoint = (req.method ? req.method : '').toLowerCase();
 
                 self.connectDefer.promise.then(function sendRequest() {
                     if (provider.debug) {
                         $log.info('$sails ' + req.method + ' ' + req.url, req.data || '');
                     }
 
-                    self._socket.emit(sailsEndpoint, {data: req.data, headers: req.headers, url: req.url}, function requestResponse(response) {
+                    self._socket.emit(sailsEndpoint, {
+                        data: req.data,
+                        headers: req.headers,
+                        url: req.url
+                    }, function requestResponse(response) {
                         if (provider.debug) {
                             $log.info('$sails' + req.method + ' ' + req.url + ' response received', response);
                         }
@@ -639,7 +644,9 @@
                         } else {
                             res.resolve(serverResponse);
                         }
+
                     });
+
                 }, function voidRequest() {
                     if (provider.debug) {
                         $log.warn('$sails' + req.method + ' ' + req.url + ' request terminated', req);
@@ -661,7 +668,7 @@
                 req.url = req.url.replace(/^(.+)\/*\s*$/, '$1');
                 req.headers = req.headers || {};
                 req.data = req.params || req.data || {};
-                req.method = angular.uppercase(req.method);
+                req.method = (req.method ? req.method : '').toUpperCase();
 
                 if (typeof req.url !== 'string') {
                     throw new Error('Invalid or missing URL!');
